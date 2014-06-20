@@ -27,7 +27,7 @@ public class YarnTaskAggregator
 	    YarnNode node = assignSlotsForAttempts(nodeID, sortedEvents);
 	    nodes.add(node);
 	}
-	return new YarnJobStatistics(startTime.toString(), endTime.toString(), nodes);
+	return new YarnJobStatistics((endTime.getTime() - startTime.getTime()) / 1000, nodes);
     }
     
     private void initializeTime(){
@@ -92,7 +92,10 @@ public class YarnTaskAggregator
                     }
 	            attemptWorkingSlot.put(event.attempt.getAttemptID(), availableSlotID);
 	            occupiedSlots.add(availableSlotID);
-	            assignedAttempts.add(new YarnAttempt(event.attempt.getAttemptID(), availableSlotID, event.attempt.getStartTime().toString(), event.attempt.getEndTime().toString()));
+	            YarnMapReduceAttempt attempt = event.attempt;
+	            long startSecond = (attempt.getStartTime().getTime() - startTime.getTime()) / 1000;
+	            long endSecond = (attempt.getEndTime().getTime() - startTime.getTime()) / 1000;
+	            assignedAttempts.add(new YarnAttempt(attempt, availableSlotID, startSecond, endSecond));
 	            if(availableSlotID >= maxSlotNumber)
 	        	maxSlotNumber = availableSlotID + 1;
 	        }else{

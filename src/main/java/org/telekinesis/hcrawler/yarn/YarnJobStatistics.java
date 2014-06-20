@@ -4,26 +4,13 @@ import java.util.List;
 
 public class YarnJobStatistics
 {
-    private final String         startTime;
-    private final String         endTime;
+    private final long           durationInSecond;
     private final List<YarnNode> nodes;
 
-    public YarnJobStatistics(String startTime, String endTime,
-	    List<YarnNode> nodes)
+    public YarnJobStatistics(long durationInSecond, List<YarnNode> nodes)
     {
-	this.startTime = startTime;
-	this.endTime = endTime;
+	this.durationInSecond = durationInSecond;
 	this.nodes = nodes;
-    }
-
-    public String getStartTime()
-    {
-	return startTime;
-    }
-
-    public String getEndTime()
-    {
-	return endTime;
     }
 
     public List<YarnNode> getNodes()
@@ -31,11 +18,16 @@ public class YarnJobStatistics
 	return nodes;
     }
 
+    public long getDurationInSecond()
+    {
+	return durationInSecond;
+    }
+
     @Override
     public String toString()
     {
-	return "YarnJobStatistics [startTime=" + startTime + ", endTime="
-	        + endTime + ", nodes=" + nodes + "]";
+	return "YarnJobStatistics [durationInSecond=" + durationInSecond
+	        + ", nodes=" + nodes + "]";
     }
 
 }

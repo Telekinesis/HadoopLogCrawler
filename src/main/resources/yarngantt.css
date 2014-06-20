@@ -1,10 +1,9 @@
 .svg{
     overflow: visible;
-    position: absolute;
 }
 
 .mapperBar{
-  fill: #0080FF;
+  fill: #6633FF;
 }
 
 .reducerBar{
@@ -43,8 +42,6 @@ body {
   font-size: 11px;
 }
 
-
-
 #tag:before {
   border: solid transparent;
   content: ' ';
@@ -56,4 +53,12 @@ body {
   border-width: 10px;
   border-bottom-color: #FA283D;
   top: -20px;
+}
+
+span.currentColor {
+  background-color: #6633FF
+}
+
+#colorRegion{
+  position: absolute;
 }

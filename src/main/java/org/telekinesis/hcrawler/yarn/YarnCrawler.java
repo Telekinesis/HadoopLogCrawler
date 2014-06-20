@@ -54,20 +54,23 @@ public class YarnCrawler
 	return jobMap;
     }
     
-    public List<YarnMapReduceAttempt> crawl(String jobID) throws IOException{
-	String attemptsBaseURL = jobHistoryURL + "/jobhistory/attempts/" + jobID;
+    public List<YarnMapReduceAttempt> crawl(String... jobList) throws IOException{
 	List<YarnMapReduceAttempt> attempts = new ArrayList<YarnMapReduceAttempt>();
-	for (AttemptType type : AttemptType.values())
+	for (String jobID : jobList)
         {
-	    String mapAttemptsURL = attemptsBaseURL + "/m/" + type;
-	    String reduceAttemptsURL = attemptsBaseURL + "/r/" + type;
-	    attempts.addAll(extractAttempts(mapAttemptsURL, TaskType.MAP));
-	    attempts.addAll(extractAttempts(reduceAttemptsURL, TaskType.REDUCE));
+	    String attemptsBaseURL = jobHistoryURL + "/jobhistory/attempts/" + jobID;
+	    for (AttemptType type : AttemptType.values())
+	    {
+		String mapAttemptsURL = attemptsBaseURL + "/m/" + type;
+		String reduceAttemptsURL = attemptsBaseURL + "/r/" + type;
+		attempts.addAll(extractAttempts(mapAttemptsURL, jobID, TaskType.MAP));
+		attempts.addAll(extractAttempts(reduceAttemptsURL, jobID, TaskType.REDUCE));
+	    }
         }
 	return attempts;
     }
     
-    private List<YarnMapReduceAttempt> extractAttempts(String url, TaskType taskType) throws IOException{
+    private List<YarnMapReduceAttempt> extractAttempts(String url, final String jobID, final TaskType taskType) throws IOException{
 	Document doc = Jsoup.connect(url).get();
 	Element script = doc.select("th>script").get(0);
 	String data = YarnDatatableProcessor.extractDataFromScript(script);
@@ -77,12 +80,13 @@ public class YarnCrawler
             public YarnMapReduceAttempt parse(String[] columns)
             {
 	        String attemptID = columns[0].split(" ")[1];
+	        String taskID = extractTaskID(attemptID);
 	        AttemptState state = AttemptState.valueOf(columns[1]);
 	        String rawNodeID = columns[3];
 	        String nodeID = extractNodeID(rawNodeID);
 	        Timestamp startTime = new Timestamp(Long.parseLong(columns[5]));
 	        Timestamp endTime = new Timestamp(Long.parseLong(columns[6]));
-	        return new YarnMapReduceAttempt(attemptID, state, nodeID, startTime, endTime);
+	        return new YarnMapReduceAttempt(jobID, taskID, attemptID, taskType, state, nodeID, startTime, endTime);
             }
 	    
 	    private String extractNodeID(String rawNodeID){
@@ -90,6 +94,11 @@ public class YarnCrawler
 		Matcher m = p.matcher(rawNodeID);
 		m.find();
 		return m.group();
+	    }
+	    
+	    private String extractTaskID(String attemptID){
+		int splitterIndex = attemptID.lastIndexOf("_");
+		return attemptID.substring(0, splitterIndex).replace("attempt", "task");
 	    }
 
 	});

@@ -17,6 +17,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.telekinesis.commonclasses.debug.ListPrinter;
 import org.telekinesis.hcrawler.hadoop.HadoopCrawler;
 import org.telekinesis.hcrawler.hadoop.JobHistory;
 import org.telekinesis.hcrawler.hadoop.JobStatistics;
@@ -29,6 +30,7 @@ import org.telekinesis.hcrawler.yarn.YarnMapReduceAttempt;
 import org.telekinesis.hcrawler.yarn.YarnTaskAggregator;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class WebMain
 {
@@ -43,6 +45,7 @@ public class WebMain
 	context.addServlet(HadoopHello.class, "/hadoopHello.do");
 	context.addServlet(HadoopCrawlServlet.class, "/hadoopCrawl.do");
 	context.addServlet(YarnHello.class, "/yarnHello.do");
+	context.addServlet(YarnJobList.class, "/yarnJobList.do");
 	context.addServlet(YarnCrawlServlet.class, "/yarnCrawl.do");
 	
 	HandlerCollection handlers = new HandlerCollection();
@@ -69,7 +72,7 @@ public class WebMain
 	        throws ServletException, IOException
 	{
 	    String jobHistoryRoot = request.getParameter("jobHistoryRoot");
-	    String jobID = request.getParameter("jobID");
+	    String jobID = request.getParameter("jobs");
 	    HadoopCrawler<SlotConfig> crawler = new HadoopCrawler<SlotConfig>(new SlotConfigExtractor());
 	    Map<String, JobHistory<SlotConfig>> jobs = crawler.crawl(jobHistoryRoot, new OneJobSelector(jobID));
 	    JobStatistics statistics = JobStatistics.create(jobs.get(jobID));
@@ -88,15 +91,31 @@ public class WebMain
     }
     
     @SuppressWarnings("serial")
+    public static class YarnJobList extends HttpServlet{
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	        throws ServletException, IOException
+	{
+	    String jobHistoryRoot = request.getParameter("jobHistoryRoot");
+	    YarnCrawler crawler = new YarnCrawler(jobHistoryRoot);
+	    Map<String, String> jobs = crawler.listJobs();
+	    sendObjectAsJson(response, jobs.keySet());
+	}
+    }
+    
+    @SuppressWarnings("serial")
     public static class YarnCrawlServlet extends HttpServlet{
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 	        throws ServletException, IOException
 	{
 	    String jobHistoryRoot = request.getParameter("jobHistoryRoot");
-	    String jobID = request.getParameter("jobID");
+	    String jobs = request.getParameter("jobs");
+	    Gson gsonInstance = new Gson();
+	    List<String> jobList = gsonInstance.fromJson(jobs, new TypeToken<List<String>>(){}.getType());
+	    ListPrinter.print(jobList);
 	    YarnCrawler crawler = new YarnCrawler(jobHistoryRoot);
-	    List<YarnMapReduceAttempt> attempts = crawler.crawl(jobID);
+	    List<YarnMapReduceAttempt> attempts = crawler.crawl(jobList.toArray(new String[]{}));
 	    YarnTaskAggregator aggregator = new YarnTaskAggregator();
 	    YarnJobStatistics jobStatistics = aggregator.aggregate(attempts);
 	    sendObjectAsJson(response, jobStatistics);
@@ -111,6 +130,7 @@ public class WebMain
     private static String convertToJson(Object o){
 	Gson gsonInstance = new Gson();
 	String json = gsonInstance.toJson(o);
+	System.out.println(json);
 	return json;
     }
     
