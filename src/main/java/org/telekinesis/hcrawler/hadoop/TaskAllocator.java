@@ -8,11 +8,13 @@ import java.util.TreeMap;
 
 public class TaskAllocator
 {
+    private final long startTime;
     private final SlotConfig slotConfig;
     private final List<String> nodes;
 
-    public TaskAllocator(SlotConfig slotConfig, List<String> nodes)
+    public TaskAllocator(long startTime, SlotConfig slotConfig, List<String> nodes)
     {
+	this.startTime = startTime;
 	this.slotConfig = slotConfig;
 	this.nodes = nodes;
     };
@@ -120,7 +122,7 @@ public class TaskAllocator
 		    event.task.getType(), i);
 	    if (slotStatus.get(slotKey) == true)
 	    {
-		allocated.add(new AllocatedTask(event.task, i));
+		allocated.add(new AllocatedTask(event.task, i, startTime));
 		slotStatus.put(slotKey, false);
 		allocationStatus.put(event.task.getAttemptID(), slotKey);
 		break;

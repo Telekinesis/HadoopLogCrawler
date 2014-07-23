@@ -1,5 +1,8 @@
 package org.telekinesis.hcrawler.web;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -10,17 +13,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.telekinesis.commonclasses.debug.ListPrinter;
-import org.telekinesis.hcrawler.hadoop.HadoopCrawler;
+import org.telekinesis.hcrawler.hadoop.HadoopJobStatistics;
 import org.telekinesis.hcrawler.hadoop.JobHistory;
-import org.telekinesis.hcrawler.hadoop.JobStatistics;
+import org.telekinesis.hcrawler.hadoop.MultiThreadHadoopCrawler;
 import org.telekinesis.hcrawler.hadoop.OneJobSelector;
 import org.telekinesis.hcrawler.hadoop.SlotConfig;
 import org.telekinesis.hcrawler.hadoop.SlotConfigExtractor;
@@ -35,23 +36,20 @@ import com.google.gson.reflect.TypeToken;
 public class WebMain
 {
     public static void main(String[] args) throws Exception{
-	Server server = new Server();
-	ServerConnector connector = new ServerConnector(server);
-	connector.setPort(8080);
-	server.setConnectors(new Connector[]{connector});
+	Server server = new Server(8080);
 	WebAppContext context = new WebAppContext();
 	context.setContextPath("/");
-	context.setResourceBase("src/main/resources");
+	context.setResourceBase("./pages");	
 	context.addServlet(HadoopHello.class, "/hadoopHello.do");
 	context.addServlet(HadoopCrawlServlet.class, "/hadoopCrawl.do");
-	context.addServlet(YarnHello.class, "/yarnHello.do");
+	context.addServlet(YarnHello.class, "/yarnHello.do");	
 	context.addServlet(YarnJobList.class, "/yarnJobList.do");
 	context.addServlet(YarnCrawlServlet.class, "/yarnCrawl.do");
 	
 	HandlerCollection handlers = new HandlerCollection();
 	handlers.setHandlers(new Handler[]{context, new DefaultHandler()});
-	server.setHandler(handlers);
-	server.start();
+    	server.setHandler(handlers);
+    	server.start();
 	server.join();
     }
     
@@ -72,11 +70,20 @@ public class WebMain
 	        throws ServletException, IOException
 	{
 	    String jobHistoryRoot = request.getParameter("jobHistoryRoot");
-	    String jobID = request.getParameter("jobs");
-	    HadoopCrawler<SlotConfig> crawler = new HadoopCrawler<SlotConfig>(new SlotConfigExtractor());
-	    Map<String, JobHistory<SlotConfig>> jobs = crawler.crawl(jobHistoryRoot, new OneJobSelector(jobID));
-	    JobStatistics statistics = JobStatistics.create(jobs.get(jobID));
-	    sendObjectAsJson(response, statistics);
+	    String jobID = request.getParameter("jobID").trim();
+	    MultiThreadHadoopCrawler<SlotConfig> crawler = new MultiThreadHadoopCrawler<SlotConfig>(new SlotConfigExtractor());
+            try
+            {
+        	Map<String, JobHistory<SlotConfig>> jobs = crawler.crawl(jobHistoryRoot, new OneJobSelector(jobID));
+        	HadoopJobStatistics statistics = HadoopJobStatistics.create(jobs.get(jobID));
+        	String json = convertToJson(statistics);
+    	    	sendJson(response, json);
+    	    	recordJson(jobID, json);
+            }
+            catch (Exception e)
+            {
+	        e.printStackTrace();
+            }
 	}
     }
     
@@ -99,7 +106,8 @@ public class WebMain
 	    String jobHistoryRoot = request.getParameter("jobHistoryRoot");
 	    YarnCrawler crawler = new YarnCrawler(jobHistoryRoot);
 	    Map<String, String> jobs = crawler.listJobs();
-	    sendObjectAsJson(response, jobs.keySet());
+	    String json = convertToJson(jobs.keySet());
+	    sendJson(response, json);
 	}
     }
     
@@ -118,14 +126,11 @@ public class WebMain
 	    List<YarnMapReduceAttempt> attempts = crawler.crawl(jobList.toArray(new String[]{}));
 	    YarnTaskAggregator aggregator = new YarnTaskAggregator();
 	    YarnJobStatistics jobStatistics = aggregator.aggregate(attempts);
-	    sendObjectAsJson(response, jobStatistics);
+	    String json = convertToJson(jobStatistics);
+	    sendJson(response, json);
 	}
     }
     
-    public static void sendObjectAsJson(HttpServletResponse response, Object o) throws IOException{
-	String json = convertToJson(o);
-	sendJson(response, json);
-    }
     
     private static String convertToJson(Object o){
 	Gson gsonInstance = new Gson();
@@ -139,6 +144,13 @@ public class WebMain
 	PrintWriter writer = response.getWriter();
 	writer.write(json);
 	writer.flush();
+    }
+    
+    private static void recordJson(String request, String json) throws IOException{
+	BufferedWriter writer = new BufferedWriter(new FileWriter(new File(request + ".log")));
+	writer.append(json);
+	writer.flush();
+	writer.close();
     }
     
 }

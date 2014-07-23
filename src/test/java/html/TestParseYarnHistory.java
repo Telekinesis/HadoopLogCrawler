@@ -14,7 +14,7 @@ public class TestParseYarnHistory
     
     @Test
     public void test() throws IOException{
-	Document doc = Jsoup.connect(url).get();
+	Document doc = Jsoup.connect(url).timeout(0).get();
 	Element dataScript = doc.select("th>script").get(0);
 	String historyJson = YarnDatatableProcessor.extractDataFromScript(dataScript);
 	System.out.println(historyJson);

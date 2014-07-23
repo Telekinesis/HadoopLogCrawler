@@ -19,25 +19,15 @@ import org.telekinesis.hcrawler.hadoop.TaskType;
 
 public class TestParseHadoopJobHistory
 {
-    private static final String targetURL     = "http://bigant-dev-001:40030/jobtracker.jsp";
     private static final String jobHistoryURL = "http://bigant-dev-001:40030/jobhistoryhome.jsp";
     private static final String jobLogURL     = "http://bigant-dev-001:40030/jobdetailshistory.jsp?logFile=file:/bi21a/var/ibm/biginsights/hadoop/logs/history/done/version-1/bigant-dev-001_1402542559351_/2014/06/12/000000/job_201406121109_0001_1402557311015_biadmin_Date%2BBased%2BNative%2BSorter";
     private static final String taskDetailURL = "http://bigant-dev-001:40030/jobtaskshistory.jsp?logFile=file:/bi21a/var/ibm/biginsights/hadoop/logs/history/done/version-1/bigant-dev-001_1402542559351_/2014/06/12/000000/job_201406121109_0001_1402557311015_biadmin_Date%2BBased%2BNative%2BSorter&taskType=MAP&status=all";
-
-    @Ignore
-    @Test
-    public void test() throws IOException
-    {
-	Document doc = Jsoup.connect(targetURL).get();
-	Elements e = doc.select("a[href=/jobhistoryhome.jsp]");
-	System.out.println(e.get(0).attr("href"));
-    }
-
+    
     @Ignore
     @Test
     public void testListJobs() throws IOException
     {
-	Document doc = Jsoup.connect(jobHistoryURL).get();
+	Document doc = Jsoup.connect(jobHistoryURL).timeout(0).get();
 	Elements elements = doc.select("td>a");
 	for (Element element : elements)
 	{
@@ -50,11 +40,11 @@ public class TestParseHadoopJobHistory
     @Test
     public void testGetJobConfig() throws IOException
     {
-	Document doc = Jsoup.connect(jobLogURL).get();
+	Document doc = Jsoup.connect(jobLogURL).timeout(0).get();
 	Element element = doc.select("b~a").get(0);
 	String url = element.absUrl("href");
 	System.out.println(url);
-	doc = Jsoup.connect(url).get();
+	doc = Jsoup.connect(url).timeout(0).get();
 	Elements elements = doc.select("tr");
 	int mapSlotCount = 0;
 	int reduceSlotCount = 0;
@@ -76,10 +66,11 @@ public class TestParseHadoopJobHistory
 	System.out.println(reduceSlotCount);
     }
 
+    @Ignore
     @Test
     public void testGetTaskAllocation() throws IOException
     {
-	Document doc = Jsoup.connect(jobLogURL).get();
+	Document doc = Jsoup.connect(jobLogURL).timeout(0).get();
 	Element rows = doc.select("tbody").get(0);
 	List<Element> children = rows.children();
 	for (int i = 1; i < children.size(); i++)
@@ -129,15 +120,16 @@ public class TestParseHadoopJobHistory
     	}
     }
     
+    @Ignore
     @Test
     public void testGetTaskDetail() throws IOException, ParseException{
-	Document doc = Jsoup.connect(taskDetailURL).get();
+	Document doc = Jsoup.connect(taskDetailURL).timeout(0).get();
 	Elements tasks = doc.select("td>a");
 	for (Element task : tasks)
         {
 	    String taskID = task.text();
 	    String url = task.absUrl("href");
-	    Document detailDoc = Jsoup.connect(url).get();
+	    Document detailDoc = Jsoup.connect(url).timeout(0).get();
 	    Element attemptTable = detailDoc.select("center>table").get(0);
 	    Elements rows = attemptTable.child(0).children();
 	    for (int i = 1; i < rows.size(); i++)

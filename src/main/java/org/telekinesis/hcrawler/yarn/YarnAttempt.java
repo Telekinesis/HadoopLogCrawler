@@ -9,10 +9,10 @@ public class YarnAttempt
     private final String   attemptID;
     private final TaskType type;
     private final int      slot;
-    private final long     startSecond;
-    private final long     endSecond;
+    private final double     startSecond;
+    private final double     endSecond;
     
-    public YarnAttempt(YarnMapReduceAttempt attempt, int slot, long startSecond, long endSecond){
+    public YarnAttempt(YarnMapReduceAttempt attempt, int slot, double startSecond, double endSecond){
 	this.jobID = attempt.getJobID();
 	this.taskID = attempt.getTaskID();
 	this.attemptID = attempt.getAttemptID();
@@ -23,7 +23,7 @@ public class YarnAttempt
     }
 
     public YarnAttempt(String jobID, String taskID, String attemptID,
-	    TaskType type, int slot, long startSecond, long endSecond)
+	    TaskType type, int slot, double startSecond, double endSecond)
     {
 	this.jobID = jobID;
 	this.taskID = taskID;
@@ -59,12 +59,12 @@ public class YarnAttempt
 	return slot;
     }
 
-    public long getStartSecond()
+    public double getStartSecond()
     {
 	return startSecond;
     }
 
-    public long getEndSecond()
+    public double getEndSecond()
     {
 	return endSecond;
     }

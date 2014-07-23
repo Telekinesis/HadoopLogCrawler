@@ -42,9 +42,20 @@ public class YarnTaskAggregator
 	for (YarnMapReduceAttempt attempt : attempts)
 	{
 	    String nodeID = attempt.getNode();
+	    Timestamp startTime = attempt.getStartTime();
+	    Timestamp endTime = attempt.getEndTime();
+	    updateTime(startTime);
+	    updateTime(endTime);
 	    sorted.put(nodeID, attempt);
 	}
 	return sorted;
+    }
+    
+    private void updateTime(Timestamp time){
+	if(startTime.after(time))
+	    startTime = time;
+	if(endTime.before(time))
+	    endTime = time;
     }
     
     private KeyToValueList<Timestamp, AttemptEvent> extractEvents(List<YarnMapReduceAttempt> attemptsOfTheNode){
@@ -56,20 +67,11 @@ public class YarnTaskAggregator
 	    if(endTime.after(startTime)){
 		sortedEvents.put(startTime, new AttemptEvent(EventType.START, attempt));
 		sortedEvents.put(endTime, new AttemptEvent(EventType.END, attempt));
-		updateTime(startTime);
-		updateTime(endTime);
 	    }else{
 		System.out.println("Time mismatch for attempt: " + attempt);
 	    }
         }
 	return sortedEvents;
-    }
-    
-    private void updateTime(Timestamp time){
-	if(startTime.after(time))
-	    startTime = time;
-	if(endTime.before(time))
-	    endTime = time;
     }
     
     private YarnNode assignSlotsForAttempts(String nodeID, KeyToValueList<Timestamp, AttemptEvent> sortedEvents)
@@ -93,8 +95,8 @@ public class YarnTaskAggregator
 	            attemptWorkingSlot.put(event.attempt.getAttemptID(), availableSlotID);
 	            occupiedSlots.add(availableSlotID);
 	            YarnMapReduceAttempt attempt = event.attempt;
-	            long startSecond = (attempt.getStartTime().getTime() - startTime.getTime()) / 1000;
-	            long endSecond = (attempt.getEndTime().getTime() - startTime.getTime()) / 1000;
+	            double startSecond = (attempt.getStartTime().getTime() - startTime.getTime()) / 1000D;
+	            double endSecond = (attempt.getEndTime().getTime() - startTime.getTime()) / 1000D;
 	            assignedAttempts.add(new YarnAttempt(attempt, availableSlotID, startSecond, endSecond));
 	            if(availableSlotID >= maxSlotNumber)
 	        	maxSlotNumber = availableSlotID + 1;

@@ -4,13 +4,20 @@ import java.util.List;
 
 public class JobHistory<T>
 {
-    private final T                   jobConfig;
+    private final String     jobID;
+    private final T          jobConfig;
     private final List<Task> tasks;
 
-    public JobHistory(T jobConfig, List<Task> tasks)
+    public JobHistory(String jobID, T jobConfig, List<Task> tasks)
     {
+	this.jobID = jobID;
 	this.jobConfig = jobConfig;
 	this.tasks = tasks;
+    }
+
+    public String getJobID()
+    {
+	return jobID;
     }
 
     public T getJobConfig()
@@ -26,7 +33,8 @@ public class JobHistory<T>
     @Override
     public String toString()
     {
-	return "JobHistory [jobConfig=" + jobConfig + ", tasks=" + tasks + "]";
+	return "JobHistory [jobID=" + jobID + ", jobConfig=" + jobConfig
+	        + ", tasks=" + tasks + "]";
     }
 
 }

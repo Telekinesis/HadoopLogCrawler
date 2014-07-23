@@ -7,29 +7,30 @@ public class AllocatedTask
     private final String   attemptID;
     private final String   node;
     private final int      slot;
-    private final String   startTime;
-    private final String   endTime;
+    private final double   startTimeInSecond;
+    private final double   endTimeInSecond;
 
     public AllocatedTask(TaskType type, String taskID, String attemptID,
-	    String node, int slot, String startTime, String endTime)
+	    String node, int slot, double startTimeInSecond, double endTimeInSecond)
     {
 	this.type = type;
 	this.taskID = taskID;
 	this.attemptID = attemptID;
 	this.node = node;
 	this.slot = slot;
-	this.startTime = startTime;
-	this.endTime = endTime;
+	this.startTimeInSecond = startTimeInSecond;
+	this.endTimeInSecond = endTimeInSecond;
     }
-    
-    public AllocatedTask(Task task, int slot){
+
+    public AllocatedTask(Task task, int slot, long startTime)
+    {
 	this.type = task.getType();
 	this.taskID = task.getTaskID();
 	this.attemptID = task.getAttemptID();
 	this.node = task.getNode();
 	this.slot = slot;
-	this.startTime = TimeToStringFormatter.format(task.getStartTime());
-	this.endTime = TimeToStringFormatter.format(task.getEndTime());
+	this.startTimeInSecond = ( task.getStartTime().getTime() - startTime ) / 1000D;
+	this.endTimeInSecond = ( task.getEndTime().getTime() - startTime ) / 1000D;
     }
 
     public TaskType getType()
@@ -57,14 +58,14 @@ public class AllocatedTask
 	return slot;
     }
 
-    public String getStartTime()
+    public double getStartTimeInSecond()
     {
-	return startTime;
+	return startTimeInSecond;
     }
 
-    public String getEndTime()
+    public double getEndTimeInSecond()
     {
-	return endTime;
+	return endTimeInSecond;
     }
 
     @Override
@@ -72,8 +73,8 @@ public class AllocatedTask
     {
 	return "AllocatedTask [type=" + type + ", taskID=" + taskID
 	        + ", attemptID=" + attemptID + ", node=" + node + ", slot="
-	        + slot + ", startTime=" + startTime + ", endTime=" + endTime
-	        + "]";
+	        + slot + ", startTime=" + startTimeInSecond + ", endTime="
+	        + endTimeInSecond + "]";
     }
 
 }

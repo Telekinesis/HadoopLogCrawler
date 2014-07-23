@@ -30,6 +30,7 @@
 			}
 			
 			function request(){
+				d3.select("svg").remove();
 				var jobTrackerURL = document.getElementById("jobTrackerURL").value;
 				var jobs = $("#jobList").DataTable().rows(".selected").data();
 				var selectedCount = $("#jobList").DataTable().rows(".selected").data().length;
@@ -46,7 +47,6 @@
 			}
 			
 			function illustrate(jobStatistics){
-				d3.select("svg").remove();
 				var barHeight = 10;
 				var barGap = 10;
 				var topAndBottomPadding = 0;

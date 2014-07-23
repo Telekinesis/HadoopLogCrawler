@@ -15,7 +15,7 @@ import com.google.gson.Gson;
 public class TestYarnCrawler
 {
     private static final String jobHistoryRoot = "http://bigant-dev-001:19888";
-    private static final String jobID = "job_1402538726852_0018";
+    private static final String jobID = "job_1403674411309_0004";
     
     @Test
     public void testListJobs() throws IOException

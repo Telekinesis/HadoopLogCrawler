@@ -25,7 +25,7 @@ public class YarnCrawler
     }
 
     public Map<String, String> listJobs() throws IOException{
-	Document doc = Jsoup.connect(jobHistoryURL).get();
+	Document doc = Jsoup.connect(jobHistoryURL).timeout(0).get();
 	Element script = doc.select("th>script").get(0);
 	String data = YarnDatatableProcessor.extractDataFromScript(script);
 	List<YarnJobHistory> jobHistory = YarnDatatableProcessor.breakScriptIntoTuples(data, new DataTableParser<YarnJobHistory>()
@@ -71,7 +71,7 @@ public class YarnCrawler
     }
     
     private List<YarnMapReduceAttempt> extractAttempts(String url, final String jobID, final TaskType taskType) throws IOException{
-	Document doc = Jsoup.connect(url).get();
+	Document doc = Jsoup.connect(url).timeout(0).get();
 	Element script = doc.select("th>script").get(0);
 	String data = YarnDatatableProcessor.extractDataFromScript(script);
 	List<YarnMapReduceAttempt> attempts = YarnDatatableProcessor.breakScriptIntoTuples(data, new DataTableParser<YarnMapReduceAttempt>(){
